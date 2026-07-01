@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Rendez-vous — {{ patient }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="eyebrow">{{ patient }}</div>
+    <h1>Rendez-vous du {{ rdv.date_heure|date:"d/m/Y H:i" }}</h1>
+  </div>
+  <a href="{% url 'patients:detail' patient.pk %}" class="btn btn-outline">← Retour à la fiche</a>
+</div>
+
+<div class="card" style="max-width: 560px;">
+  <p><strong>Motif :</strong> {{ rdv.motif }}</p>
+  <p><strong>Statut :</strong> <span class="badge-niveau badge-{% if rdv.statut == 'honore' %}success{% elif rdv.statut == 'annule' %}danger{% else %}info{% endif %}">{{ rdv.get_statut_display }}</span></p>
+  {% if rdv.notes %}<p><strong>Notes :</strong> {{ rdv.notes|linebreaksbr }}</p>{% endif %}
+
+  <div class="flex-between mt-1">
+    <a href="{% url 'consultations:rdv_modifier' rdv.pk %}" class="btn btn-outline">Modifier</a>
+    {% if rdv.statut == 'planifie' %}
+      <a href="{% url 'consultations:creer' patient.pk %}" class="btn btn-sauge">Enregistrer la consultation correspondante</a>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

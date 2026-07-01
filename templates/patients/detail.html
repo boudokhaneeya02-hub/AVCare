@@ -1,0 +1,430 @@
+{% extends "base.html" %}
+{% block title %}{{ patient }} - AVCare{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="eyebrow">Fiche patient</div>
+    <h1>{{ patient.nom|upper }} {{ patient.prenom }}</h1>
+
+    <div class="muted">
+      {% if patient.age %}
+        {{ patient.age }} ans
+      {% endif %}
+
+      {% if patient.sexe %}
+        · {{ patient.get_sexe_display }}
+      {% endif %}
+
+      · {{ patient.get_indication_display }}
+
+      {% if not patient.actif %}
+        · <span class="badge-niveau badge-warning">Inactif</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+    <a href="{% url 'consultations:creer' patient.pk %}" class="btn btn-sauge">
+      + Nouvelle consultation
+    </a>
+
+    <a href="{% url 'consultations:rdv_creer' patient.pk %}" class="btn btn-outline">
+      + Rendez-vous
+    </a>
+
+    <a href="{% url 'patients:modifier' patient.pk %}" class="btn btn-outline">
+      Modifier
+    </a>
+
+    <form method="post"
+          action="{% url 'patients:supprimer' patient.pk %}"
+          style="margin:0;"
+          onsubmit="return confirm('Voulez-vous vraiment supprimer cette fiche patient ? Cette action est définitive.');">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">
+        Supprimer
+      </button>
+    </form>
+  </div>
+</div>
+
+{% with derniere=patient.derniere_consultation %}
+  {% if derniere %}
+    {% if derniere.interpretation.alerte_urgente %}
+      <div class="alerte-box danger">
+        <span class="icone">!</span>
+        <span>
+          <strong>Alerte :</strong> {{ derniere.interpretation.message }}
+        </span>
+      </div>
+    {% endif %}
+  {% endif %}
+{% endwith %}
+
+<div style="display:grid; grid-template-columns: 1.1fr 1fr; gap: 1rem; align-items: start;">
+
+  <div>
+    <div class="card">
+      <div class="card-title">Évolution de l'INR</div>
+
+      {% if graph_valeurs %}
+        <canvas id="graphInr" height="160"></canvas>
+      {% else %}
+        <p class="muted">Aucune mesure d'INR enregistrée pour l'instant.</p>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <div class="flex-between" style="margin-bottom: 0.9rem;">
+        <div class="card-title" style="margin:0;">Historique des consultations</div>
+      </div>
+
+      {% if consultations %}
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>INR</th>
+            <th>Interprétation</th>
+            <th>Dose / jour</th>
+            <th>Événement</th>
+            <th></th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for c in consultations %}
+          <tr>
+            <td data-label="Date">
+              {{ c.date_consultation|date:"d/m/Y" }}
+            </td>
+
+            <td data-label="INR" class="num">
+              {{ c.valeur_inr }}
+            </td>
+
+            <td data-label="Interprétation">
+              <span class="badge-niveau badge-{{ c.interpretation.couleur }}">
+                {{ c.interpretation.libelle }}
+              </span>
+            </td>
+
+            <td data-label="Dose / jour" class="num">
+              {{ c.dose_comprimes }} cp
+              <span class="muted">({{ c.dose_mg }} mg)</span>
+            </td>
+
+            <td data-label="Événement">
+              {% if c.evenement_hemorragique %}
+                <span class="badge-niveau badge-danger">Hémorragique</span>
+              {% endif %}
+
+              {% if c.evenement_thrombotique %}
+                <span class="badge-niveau badge-danger">Thrombotique</span>
+              {% endif %}
+
+              {% if not c.evenement_hemorragique and not c.evenement_thrombotique %}
+                <span class="muted">Aucun</span>
+              {% endif %}
+            </td>
+
+            <td class="text-right">
+              <a href="{% url 'consultations:detail' c.pk %}" class="btn btn-sm btn-outline btn-block">
+                Détail
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      {% else %}
+      <div class="empty-state">
+        <p>Aucune consultation enregistrée. Ajoutez la première mesure d'INR.</p>
+        <a href="{% url 'consultations:creer' patient.pk %}" class="btn btn-sauge">
+          + Nouvelle consultation
+        </a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div>
+    <div class="card">
+      <div class="card-title">Cible INR</div>
+
+      <p class="mono" style="font-size:1.3rem; color: var(--bleu-nuit); margin: 0;">
+        {{ patient.inr_cible_min }} - {{ patient.inr_cible_max }}
+      </p>
+
+      {% if patient.valve_mecanique %}
+        <p class="help">
+          Prothèse cardiaque mécanique
+          {% if patient.type_valve %}
+            : {{ patient.type_valve }}
+          {% endif %}
+          - cible relevée en conséquence. Une attention particulière est portée au sous-dosage.
+        </p>
+      {% else %}
+        <p class="help">Cible standard sous AVK.</p>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <div class="card-title">Traitement actuel</div>
+
+      <p>
+        <strong>{{ patient.get_molecule_avk_display }}</strong>
+      </p>
+
+      {% if patient.traitement_associe %}
+        <p class="help">{{ patient.traitement_associe|linebreaksbr }}</p>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <div class="card-title">Antécédents médicaux</div>
+
+      {% if patient.antecedents_medicaux %}
+        <p>{{ patient.antecedents_medicaux|linebreaksbr }}</p>
+      {% else %}
+        <p class="muted">Non renseignés.</p>
+      {% endif %}
+
+      {% if patient.date_evenement %}
+        <p class="help">
+          Date de l'événement : {{ patient.date_evenement|date:"d/m/Y" }}
+        </p>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <div class="card-title">Paramètres biologiques</div>
+
+      {% if patient.date_bilan_biologique %}
+        <p class="help">
+          Bilan du {{ patient.date_bilan_biologique|date:"d/m/Y" }}
+        </p>
+      {% endif %}
+
+      <table class="data-table">
+        <tbody>
+          <tr>
+            <td data-label="Urée">Urée</td>
+            <td data-label="Valeur" class="text-right num">
+              {% if patient.uree %}
+                {{ patient.uree }} g/L
+              {% else %}
+                <span class="muted">-</span>
+              {% endif %}
+            </td>
+          </tr>
+
+          <tr>
+            <td data-label="Créatinine">Créatinine</td>
+            <td data-label="Valeur" class="text-right num">
+              {% if patient.creatinine %}
+                {{ patient.creatinine }} mg/L
+              {% else %}
+                <span class="muted">-</span>
+              {% endif %}
+            </td>
+          </tr>
+
+          <tr>
+            <td data-label="TP">TP</td>
+            <td data-label="Valeur" class="text-right num">
+              {% if patient.tp %}
+                {{ patient.tp }} %
+              {% else %}
+                <span class="muted">-</span>
+              {% endif %}
+            </td>
+          </tr>
+
+          <tr>
+            <td data-label="INR bilan">INR bilan</td>
+            <td data-label="Valeur" class="text-right num">
+              {% if patient.inr_biologie %}
+                {{ patient.inr_biologie }}
+              {% else %}
+                <span class="muted">-</span>
+              {% endif %}
+            </td>
+          </tr>
+
+          <tr>
+            <td data-label="Hémoglobine">Hémoglobine</td>
+            <td data-label="Valeur" class="text-right num">
+              {% if patient.hemoglobine %}
+                {{ patient.hemoglobine }} g/dL
+              {% else %}
+                <span class="muted">-</span>
+              {% endif %}
+            </td>
+          </tr>
+
+          <tr>
+            <td data-label="Plaquettes">Plaquettes</td>
+            <td data-label="Valeur" class="text-right num">
+              {% if patient.plaquettes %}
+                {{ patient.plaquettes }} /mm³
+              {% else %}
+                <span class="muted">-</span>
+              {% endif %}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      {% if patient.ionogramme %}
+        <p class="help">Ionogramme : {{ patient.ionogramme }}</p>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <div class="flex-between" style="margin-bottom: 0.9rem;">
+        <div class="card-title" style="margin:0;">Rendez-vous</div>
+        <span class="badge-niveau badge-info">
+          Suivi {{ patient.get_frequence_suivi_display|lower }}
+        </span>
+      </div>
+
+      {% if prochains_rdv %}
+        {% for rdv in prochains_rdv %}
+          <div class="flex-between" style="padding: 0.5rem 0; border-bottom: 1px solid var(--ligne);">
+            <div>
+              <div>{{ rdv.date_heure|date:"d/m/Y H:i" }}</div>
+              <div class="help">{{ rdv.motif }}</div>
+            </div>
+
+            {% if rdv.statut == "honore" %}
+              <span class="badge-niveau badge-success">{{ rdv.get_statut_display }}</span>
+            {% elif rdv.statut == "annule" %}
+              <span class="badge-niveau badge-danger">{{ rdv.get_statut_display }}</span>
+            {% else %}
+              <span class="badge-niveau badge-info">{{ rdv.get_statut_display }}</span>
+            {% endif %}
+          </div>
+        {% endfor %}
+      {% else %}
+        <p class="muted">Aucun rendez-vous planifié.</p>
+      {% endif %}
+
+      <a href="{% url 'consultations:rdv_creer' patient.pk %}" class="btn btn-sm btn-outline mt-1">
+        + Planifier un rendez-vous
+      </a>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block extra_js %}
+{{ graph_labels|json_script:"graph-labels" }}
+{{ graph_valeurs|json_script:"graph-valeurs" }}
+{{ cible_min|json_script:"cible-min" }}
+{{ cible_max|json_script:"cible-max" }}
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  var canvas = document.getElementById("graphInr");
+
+  if (!canvas) {
+    return;
+  }
+
+  var labelsElement = document.getElementById("graph-labels");
+  var valeursElement = document.getElementById("graph-valeurs");
+  var cibleMinElement = document.getElementById("cible-min");
+  var cibleMaxElement = document.getElementById("cible-max");
+
+  if (!labelsElement || !valeursElement || !cibleMinElement || !cibleMaxElement) {
+    return;
+  }
+
+  var labels = JSON.parse(labelsElement.textContent);
+  var valeurs = JSON.parse(valeursElement.textContent);
+  var cibleMin = parseFloat(JSON.parse(cibleMinElement.textContent));
+  var cibleMax = parseFloat(JSON.parse(cibleMaxElement.textContent));
+
+  new Chart(canvas.getContext("2d"), {
+    type: "line",
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: "INR mesuré",
+          data: valeurs,
+          borderColor: "#1B3A4B",
+          backgroundColor: "rgba(27, 58, 75, 0.08)",
+          tension: 0.25,
+          pointBackgroundColor: "#1B3A4B",
+          pointRadius: 4,
+          fill: true
+        },
+        {
+          label: "Cible haute",
+          data: labels.map(function () {
+            return cibleMax;
+          }),
+          borderColor: "#2D6E5E",
+          borderDash: [4, 4],
+          pointRadius: 0,
+          fill: false
+        },
+        {
+          label: "Cible basse",
+          data: labels.map(function () {
+            return cibleMin;
+          }),
+          borderColor: "#2D6E5E",
+          borderDash: [4, 4],
+          pointRadius: 0,
+          fill: false
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: "bottom",
+          labels: {
+            font: {
+              family: "Inter",
+              size: 11
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          suggestedMin: 0.5,
+          suggestedMax: Math.max(5, cibleMax + 1),
+          ticks: {
+            font: {
+              family: "JetBrains Mono",
+              size: 11
+            }
+          }
+        },
+        x: {
+          ticks: {
+            font: {
+              family: "Inter",
+              size: 11
+            }
+          }
+        }
+      }
+    }
+  });
+});
+</script>
+{% endblock %}

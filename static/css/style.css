@@ -1,0 +1,617 @@
+/* =========================================================
+   Suivi AVK — Système de design
+   Identité : clinique, sobre, chaleureuse. Pas de SaaS générique.
+   ========================================================= */
+
+:root {
+  /* Couleurs */
+  --ivoire: #F7F5F0;
+  --ivoire-carte: #FFFFFF;
+  --bleu-nuit: #1B3A4B;
+  --bleu-nuit-clair: #2C5468;
+  --sauge: #2D6E5E;
+  --sauge-clair: #E5F0EC;
+  --terracotta: #C97B4A;
+  --terracotta-clair: #FBEDE2;
+  --rouge-alerte: #A8323C;
+  --rouge-alerte-clair: #FBEAEA;
+  --encre: #3D3A35;
+  --encre-douce: #6B6660;
+  --ligne: #E2DDD3;
+
+  /* Typo */
+  --font-display: "Source Serif 4", Georgia, serif;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: "JetBrains Mono", "Courier New", monospace;
+
+  --radius: 6px;
+  --shadow-carte: 0 1px 2px rgba(27, 58, 75, 0.06), 0 4px 12px rgba(27, 58, 75, 0.04);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--ivoire);
+  color: var(--encre);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  color: var(--bleu-nuit);
+  font-weight: 600;
+  margin: 0 0 0.4em 0;
+  letter-spacing: -0.01em;
+}
+
+h1 { font-size: 1.9rem; }
+h2 { font-size: 1.4rem; }
+h3 { font-size: 1.1rem; }
+
+a { color: var(--bleu-nuit-clair); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.mono { font-family: var(--font-mono); }
+
+/* ---------- Layout ---------- */
+
+.shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  background: var(--bleu-nuit);
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Signature visuelle : tracé de courbe INR discret dans le bandeau */
+.topbar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='80' viewBox='0 0 600 80'%3E%3Cpath d='M0 55 C 40 50, 70 25, 100 30 S 160 60, 200 45 S 260 15, 300 25 S 360 55, 400 40 S 460 18, 500 28 S 560 50, 600 35' fill='none' stroke='%232D6E5E' stroke-width='2' opacity='0.35'/%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+  background-size: 600px 80px;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.topbar-inner {
+  position: relative;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0.9rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+
+.brand-mark {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.brand-tagline {
+  font-size: 0.78rem;
+  color: #C9D6DC;
+  letter-spacing: 0.02em;
+}
+
+.topnav {
+  display: flex;
+  gap: 1.4rem;
+  align-items: center;
+  font-size: 0.92rem;
+}
+
+.topnav a {
+  color: #E7EEF1;
+}
+.topnav a:hover { color: #fff; }
+
+.topnav .user-pill {
+  background: rgba(255,255,255,0.1);
+  padding: 0.35rem 0.8rem;
+  border-radius: 100px;
+  font-size: 0.85rem;
+  color: #fff;
+}
+
+.btn-logout {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.35);
+  color: #fff;
+  padding: 0.35rem 0.9rem;
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.btn-logout:hover { background: rgba(255,255,255,0.12); }
+
+main.content {
+  flex: 1;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+  width: 100%;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 1.6rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.page-header .eyebrow {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--sauge);
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+}
+
+/* ---------- Cartes ---------- */
+
+.card {
+  background: var(--ivoire-carte);
+  border: 1px solid var(--ligne);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-carte);
+  padding: 1.4rem;
+}
+
+.card + .card { margin-top: 1rem; }
+
+.card-title {
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--encre-douce);
+  margin-bottom: 0.9rem;
+  font-family: var(--font-body);
+  font-weight: 600;
+}
+
+/* ---------- Boutons ---------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1.1rem;
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  font-family: var(--font-body);
+  transition: transform 0.05s ease, opacity 0.15s ease;
+}
+.btn:hover { text-decoration: none; opacity: 0.92; }
+.btn:active { transform: translateY(1px); }
+
+.btn-primary { background: var(--bleu-nuit); color: #fff; }
+.btn-sauge { background: var(--sauge); color: #fff; }
+.btn-outline { background: transparent; border-color: var(--ligne); color: var(--encre); }
+.btn-outline:hover { border-color: var(--bleu-nuit); }
+.btn-danger { background: var(--rouge-alerte); color: #fff; }
+.btn-sm { padding: 0.35rem 0.75rem; font-size: 0.82rem; }
+.btn-block { width: 100%; justify-content: center; }
+
+/* ---------- Formulaires ---------- */
+
+.form-control, .form-select, textarea.form-control {
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--ligne);
+  border-radius: var(--radius);
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  background: #fff;
+  color: var(--encre);
+}
+.form-control:focus, .form-select:focus {
+  outline: 2px solid var(--bleu-nuit-clair);
+  outline-offset: 1px;
+  border-color: var(--bleu-nuit-clair);
+}
+
+.field { margin-bottom: 1rem; }
+.field label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--encre);
+  margin-bottom: 0.3rem;
+}
+.field .help {
+  font-size: 0.78rem;
+  color: var(--encre-douce);
+  margin-top: 0.25rem;
+}
+.field .errorlist {
+  list-style: none;
+  padding: 0;
+  margin: 0.3rem 0 0;
+  color: var(--rouge-alerte);
+  font-size: 0.82rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+.form-row-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1rem;
+}
+@media (max-width: 640px) {
+  .form-row, .form-row-3 { grid-template-columns: 1fr; }
+}
+
+.checkbox-line {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.checkbox-line input { width: auto; }
+
+.checkbox-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem 1rem;
+  margin-top: 0.5rem;
+}
+.checkbox-grid label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.88rem;
+  font-weight: 400;
+  cursor: pointer;
+}
+.checkbox-grid input { width: auto; }
+@media (max-width: 640px) {
+  .checkbox-grid { grid-template-columns: 1fr; }
+}
+
+/* ---------- Tableaux ---------- */
+
+table.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+table.data-table th {
+  text-align: left;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--encre-douce);
+  border-bottom: 1px solid var(--ligne);
+  padding: 0.5rem 0.6rem;
+  font-weight: 600;
+}
+table.data-table td {
+  padding: 0.65rem 0.6rem;
+  border-bottom: 1px solid var(--ligne);
+  vertical-align: middle;
+}
+table.data-table tr:hover td { background: var(--sauge-clair); }
+table.data-table .num { font-family: var(--font-mono); }
+
+/* ---------- Badges de niveau INR ---------- */
+
+.badge-niveau {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 100px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.badge-success { background: var(--sauge-clair); color: var(--sauge); }
+.badge-warning { background: var(--terracotta-clair); color: var(--terracotta); }
+.badge-danger  { background: var(--rouge-alerte-clair); color: var(--rouge-alerte); }
+.badge-info    { background: #E8EEF1; color: var(--bleu-nuit-clair); }
+
+/* ---------- Bandeau d'alerte INR ---------- */
+
+.alerte-box {
+  border-radius: var(--radius);
+  padding: 0.9rem 1.1rem;
+  display: flex;
+  gap: 0.7rem;
+  align-items: flex-start;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+.alerte-box.success { background: var(--sauge-clair); border-left: 4px solid var(--sauge); color: #1f4a3e; }
+.alerte-box.warning  { background: var(--terracotta-clair); border-left: 4px solid var(--terracotta); color: #7a4a26; }
+.alerte-box.danger   { background: var(--rouge-alerte-clair); border-left: 4px solid var(--rouge-alerte); color: var(--rouge-alerte); font-weight: 600; }
+.alerte-box .icone { font-size: 1.1rem; line-height: 1; }
+
+/* ---------- Jauge INR (élément signature) ---------- */
+
+.jauge-inr {
+  margin: 0.6rem 0 0.3rem;
+}
+.jauge-inr .piste {
+  position: relative;
+  height: 10px;
+  border-radius: 100px;
+  background: linear-gradient(
+    to right,
+    var(--terracotta-clair) 0%,
+    var(--terracotta-clair) var(--p-cible-min, 35%),
+    var(--sauge-clair) var(--p-cible-min, 35%),
+    var(--sauge-clair) var(--p-cible-max, 60%),
+    var(--terracotta-clair) var(--p-cible-max, 60%),
+    var(--rouge-alerte-clair) 92%,
+    var(--rouge-alerte-clair) 100%
+  );
+}
+.jauge-inr .curseur {
+  position: absolute;
+  top: -5px;
+  width: 4px;
+  height: 20px;
+  border-radius: 2px;
+  background: var(--bleu-nuit);
+  left: var(--p-valeur, 50%);
+  transform: translateX(-50%);
+  box-shadow: 0 0 0 2px #fff;
+}
+.jauge-inr .reperes {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  color: var(--encre-douce);
+  margin-top: 0.3rem;
+  font-family: var(--font-mono);
+}
+
+/* ---------- Listes patients ---------- */
+
+.patient-row-name {
+  font-weight: 600;
+  color: var(--bleu-nuit);
+}
+.patient-row-meta {
+  font-size: 0.78rem;
+  color: var(--encre-douce);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--encre-douce);
+}
+.empty-state h3 { color: var(--encre-douce); }
+
+/* ---------- Stat cards (dashboard) ---------- */
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.6rem;
+}
+@media (max-width: 900px) {
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+}
+.stat-card {
+  background: var(--ivoire-carte);
+  border: 1px solid var(--ligne);
+  border-radius: var(--radius);
+  padding: 1.1rem 1.2rem;
+}
+.stat-card .valeur {
+  font-family: var(--font-mono);
+  font-size: 1.7rem;
+  color: var(--bleu-nuit);
+  font-weight: 700;
+  line-height: 1;
+}
+.stat-card .label {
+  font-size: 0.78rem;
+  color: var(--encre-douce);
+  margin-top: 0.4rem;
+}
+.stat-card.alerte .valeur { color: var(--rouge-alerte); }
+
+/* ---------- Auth pages ---------- */
+
+.auth-shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bleu-nuit);
+  background-image:
+    radial-gradient(circle at 15% 20%, rgba(45, 110, 94, 0.35), transparent 45%),
+    radial-gradient(circle at 85% 80%, rgba(201, 123, 74, 0.18), transparent 45%);
+  padding: 1.5rem;
+}
+.auth-card {
+  background: var(--ivoire-carte);
+  border-radius: 10px;
+  padding: 2.2rem 2.4rem;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+}
+.auth-card .brand-mark {
+  color: var(--bleu-nuit);
+  font-size: 1.5rem;
+  display: block;
+  margin-bottom: 0.2rem;
+}
+.auth-card .brand-tagline {
+  color: var(--encre-douce);
+  font-size: 0.85rem;
+  margin-bottom: 1.6rem;
+  display: block;
+}
+.auth-footer {
+  margin-top: 1.2rem;
+  font-size: 0.85rem;
+  text-align: center;
+  color: var(--encre-douce);
+}
+
+/* ---------- Utilitaires ---------- */
+
+.muted { color: var(--encre-douce); }
+.text-right { text-align: right; }
+.flex-between { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.mt-1 { margin-top: 1rem; }
+.mt-2 { margin-top: 2rem; }
+.gap-sm { gap: 0.5rem; }
+.section-divider {
+  border: none;
+  border-top: 1px solid var(--ligne);
+  margin: 1.6rem 0;
+}
+
+.messages-stack { margin-bottom: 1.2rem; display: flex; flex-direction: column; gap: 0.5rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
+
+/* =========================================================
+   Mobile — pensé pour une consultation au téléphone par le
+   médecin (liste patients, fiche, saisie INR rapide).
+   ========================================================= */
+
+@media (max-width: 760px) {
+  .topbar-inner {
+    padding: 0.7rem 1rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .brand-tagline { display: none; }
+  .topnav {
+    width: 100%;
+    justify-content: space-between;
+    gap: 0.6rem;
+    font-size: 0.85rem;
+  }
+  .topnav .user-pill { display: none; }
+
+  main.content { padding: 1.1rem 0.9rem 3rem; }
+
+  h1 { font-size: 1.5rem; }
+
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.8rem;
+  }
+  .page-header > div:last-child,
+  .page-header > a,
+  .page-header .btn {
+    width: 100%;
+  }
+  .page-header > div[style*="display:flex"],
+  .page-header > div[style*="display: flex"] {
+    flex-direction: column;
+  }
+
+  .card { padding: 1.1rem; }
+
+  .stats-grid { grid-template-columns: 1fr 1fr; gap: 0.7rem; }
+  .stat-card { padding: 0.9rem 1rem; }
+  .stat-card .valeur { font-size: 1.4rem; }
+
+  /* Détail patient : la grille deux-colonnes devient une seule colonne,
+     contenu principal (graphique + historique) avant les infos latérales. */
+  div[style*="grid-template-columns: 1.1fr 1fr"],
+  div[style*="grid-template-columns: 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Tableaux : on bascule en liste de cartes empilées plutôt que
+     d'imposer un scroll horizontal illisible sur petit écran. */
+  table.data-table thead { display: none; }
+  table.data-table, table.data-table tbody, table.data-table tr, table.data-table td {
+    display: block;
+    width: 100%;
+  }
+  table.data-table tr {
+    border: 1px solid var(--ligne);
+    border-radius: var(--radius);
+    margin-bottom: 0.7rem;
+    padding: 0.6rem 0.8rem;
+  }
+  table.data-table td {
+    border-bottom: none;
+    padding: 0.3rem 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  table.data-table td:empty { display: none; }
+  table.data-table td[data-label]::before {
+    content: attr(data-label);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--encre-douce);
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+  table.data-table tr:hover td { background: transparent; }
+
+  .btn { padding: 0.65rem 1.1rem; font-size: 0.95rem; }
+  .btn-sm { padding: 0.5rem 0.9rem; }
+
+  .auth-card { padding: 1.6rem 1.4rem; }
+
+  /* Cibles tactiles confortables pour les cases à cocher de la liste
+     d'événements hémorragiques/thrombotiques. */
+  .checkbox-grid label {
+    padding: 0.5rem 0.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .btn-danger {
+  background: #b4232f;
+  color: white;
+  border: 1px solid #b4232f;
+}
+
+.btn-danger:hover {
+  background: #8f1d27;
+  border-color: #8f1d27;
+}
+}

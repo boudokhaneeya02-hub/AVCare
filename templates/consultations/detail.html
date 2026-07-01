@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}Consultation du {{ consultation.date_consultation|date:"d/m/Y" }} — {{ patient }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="eyebrow">Consultation</div>
+    <h1>{{ consultation.date_consultation|date:"d/m/Y" }} — {{ patient }}</h1>
+  </div>
+  <a href="{% url 'patients:detail' patient.pk %}" class="btn btn-outline">
+    Retour à la fiche patient
+  </a>
+</div>
+
+{% if interpretation.alerte_urgente %}
+<div class="alerte-box danger">
+  <span class="icone">⚠</span>
+  <span>{{ interpretation.message }}</span>
+</div>
+{% endif %}
+
+<div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
+  <div class="card">
+    <div class="card-title">INR mesuré</div>
+    <p class="mono" style="font-size: 2rem; color: var(--bleu-nuit); margin:0;">{{ consultation.valeur_inr }}</p>
+
+    <div class="jauge-inr"
+         style="--p-cible-min: {{ p_cible_min }}%; --p-cible-max: {{ p_cible_max }}%; --p-valeur: {{ p_valeur }}%;">
+      <div class="piste"></div>
+      <div class="curseur"></div>
+      <div class="reperes">
+        <span>0</span>
+        <span>{{ patient.inr_cible_min }}</span>
+        <span>{{ patient.inr_cible_max }}</span>
+        <span>5+</span>
+      </div>
+    </div>
+
+    <div class="alerte-box {{ interpretation.couleur }}" style="margin-top:1rem;">
+      <span class="icone">
+        {% if interpretation.couleur == 'success' %}✓{% elif interpretation.couleur == 'danger' %}⚠{% else %}↕{% endif %}
+      </span>
+      <span>{{ interpretation.message }}</span>
+    </div>
+    <p class="help">Cible définie pour ce patient : {{ patient.inr_cible_min }} – {{ patient.inr_cible_max }}. Aide à la lecture indicative — la décision médicale appartient au médecin.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Dose administrée</div>
+    <p class="mono" style="font-size: 1.6rem; color: var(--bleu-nuit); margin:0;">
+      {{ consultation.dose_comprimes }} cp <span style="font-size:1rem; color:var(--encre-douce);">({{ consultation.dose_mg }} mg)</span>
+    </p>
+    {% if consultation.dose_libre %}<p class="help">{{ consultation.dose_libre }}</p>{% endif %}
+
+    {% with precedente=consultation.consultation_precedente %}
+    {% if precedente %}
+      <p class="help">Dose à la consultation précédente ({{ precedente.date_consultation|date:"d/m/Y" }}) : {{ precedente.dose_comprimes }} cp/jour</p>
+    {% endif %}
+    {% endwith %}
+
+    {% if consultation.changement_dose %}
+      <div class="alerte-box info" style="background:#E8EEF1; border-left: 4px solid var(--bleu-nuit-clair); color: var(--bleu-nuit); margin-top:0.6rem;">
+        <span class="icone">↻</span>
+        <span>
+          <strong>Dose ajustée à cette consultation.</strong>
+          {% if consultation.motif_ajustement_dose %}
+            Motif : {{ consultation.motif_ajustement_dose }}
+          {% else %}
+            <span class="muted">Aucun motif renseigné.</span>
+          {% endif %}
+        </span>
+      </div>
+    {% endif %}
+
+    <hr class="section-divider">
+    <p><strong>Observance :</strong> {{ consultation.get_observance_signalee_display }}</p>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title">Suggestion de palier (indicative)</div>
+  {% with suggestion=consultation.suggestion_ajustement %}
+    <p class="mono" style="font-size:1.2rem; color:var(--bleu-nuit); margin:0;">{{ suggestion.libelle }}{% if suggestion.pourcentage %} — {{ suggestion.pourcentage }}{% endif %}</p>
+    <p>{{ suggestion.message }}</p>
+  {% endwith %}
+  <p class="help">Cette suggestion est calculée à titre indicatif à partir de l'INR et de la dose de cette consultation. Elle ne remplace pas le jugement clinique.</p>
+</div>
+
+<div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
+  <div class="card">
+    <div class="card-title">Événement hémorragique</div>
+    {% if consultation.evenement_hemorragique %}
+      <span class="badge-niveau badge-danger">Oui</span>
+      <ul style="margin: 0.6rem 0 0; padding-left: 1.2rem;">
+        {% for libelle in consultation.libelles_evenements_hemorragiques %}
+          <li>{{ libelle }}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <span class="muted">Aucun événement hémorragique signalé</span>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div class="card-title">Événement thrombotique / embolique</div>
+    {% if consultation.evenement_thrombotique %}
+      <span class="badge-niveau badge-danger">Oui</span>
+      <ul style="margin: 0.6rem 0 0; padding-left: 1.2rem;">
+        {% for libelle in consultation.libelles_evenements_thrombotiques %}
+          <li>{{ libelle }}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <span class="muted">Aucun événement thrombotique/embolique signalé</span>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title">Commentaire médical</div>
+  {% if consultation.commentaire_medical %}
+    <p>{{ consultation.commentaire_medical|linebreaksbr }}</p>
+  {% else %}
+    <p class="muted">Aucun commentaire renseigné.</p>
+  {% endif %}
+</div>
+{% endblock %}

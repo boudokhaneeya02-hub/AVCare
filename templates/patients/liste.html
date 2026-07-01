@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Patients — Suivi AVK{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="eyebrow">Tableau de bord</div>
+    <h1>Mes patients</h1>
+  </div>
+  <a href="{% url 'patients:creer' %}" class="btn btn-primary">+ Nouveau patient</a>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="valeur">{{ total_actifs }}</div>
+    <div class="label">Patients actifs</div>
+  </div>
+  <div class="stat-card {% if nb_alertes > 0 %}alerte{% endif %}">
+    <div class="valeur">{{ nb_alertes }}</div>
+    <div class="label">Alertes INR en cours</div>
+  </div>
+</div>
+
+{% if patients_alerte %}
+  <div class="alerte-box danger">
+    <span class="icone">⚠</span>
+    <div>
+      <strong>Patients nécessitant une attention immédiate :</strong>
+      {% for p in patients_alerte %}
+        <a href="{% url 'patients:detail' p.pk %}" style="color: inherit; text-decoration: underline;">{{ p }}</a>{% if not forloop.last %}, {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+{% endif %}
+
+<div class="card">
+  <form method="get" class="flex-between" style="margin-bottom: 1rem;">
+    <input type="text" name="q" value="{{ q }}" placeholder="Rechercher un patient (nom, prénom)" class="form-control" style="max-width: 320px;">
+    <div style="display:flex; gap:0.5rem;">
+      <a href="?filtre=actifs{% if q %}&q={{ q }}{% endif %}" class="btn btn-sm {% if filtre == 'actifs' %}btn-primary{% else %}btn-outline{% endif %}">Actifs</a>
+      <a href="?filtre=inactifs{% if q %}&q={{ q }}{% endif %}" class="btn btn-sm {% if filtre == 'inactifs' %}btn-primary{% else %}btn-outline{% endif %}">Inactifs</a>
+      <a href="?filtre=tous{% if q %}&q={{ q }}{% endif %}" class="btn btn-sm {% if filtre == 'tous' %}btn-primary{% else %}btn-outline{% endif %}">Tous</a>
+      <button type="submit" class="btn btn-sm btn-outline">Rechercher</button>
+    </div>
+  </form>
+
+  {% if patients %}
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Patient</th>
+        <th>Indication</th>
+        <th>Cible INR</th>
+        <th>Dernier INR</th>
+        <th>Prochain RDV</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in patients %}
+      <tr>
+        <td data-label="Patient">
+          <div>
+            <div class="patient-row-name"><a href="{% url 'patients:detail' p.pk %}">{{ p.nom|upper }} {{ p.prenom }}</a></div>
+            <div class="patient-row-meta">{% if p.age %}{{ p.age }} ans{% endif %}{% if p.valve_mecanique %} · prothèse mécanique{% endif %}</div>
+          </div>
+        </td>
+        <td data-label="Indication">{{ p.get_indication_display }}</td>
+        <td data-label="Cible INR" class="num">{{ p.inr_cible_min }} – {{ p.inr_cible_max }}</td>
+        <td data-label="Dernier INR">
+          {% with derniere=p.derniere_consultation %}
+            {% if derniere %}
+              <span class="num">{{ derniere.valeur_inr }}</span>
+              <span class="badge-niveau badge-{{ derniere.interpretation.couleur }}">{{ derniere.interpretation.libelle }}</span>
+            {% else %}
+              <span class="muted">—</span>
+            {% endif %}
+          {% endwith %}
+        </td>
+        <td data-label="Prochain RDV">
+          {% with rdv=p.prochain_rdv %}
+            {% if rdv %}{{ rdv.date_heure|date:"d/m/Y H:i" }}{% else %}<span class="muted">—</span>{% endif %}
+          {% endwith %}
+        </td>
+        <td class="text-right">
+          <div style="display:flex; gap:0.4rem; justify-content:flex-end;">
+            <a href="{% url 'patients:detail' p.pk %}" class="btn btn-sm btn-outline">Ouvrir</a>
+            <form method="post"
+                  action="{% url 'patients:supprimer' p.pk %}"
+                  style="margin:0;"
+                  onsubmit="return confirm('Voulez-vous vraiment supprimer la fiche de {{ p }} ? Cette action est irréversible.');">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-danger">Supprimer</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty-state">
+    <h3>Aucun patient pour le moment</h3>
+    <p>Créez la première fiche patient pour commencer le suivi.</p>
+    <a href="{% url 'patients:creer' %}" class="btn btn-primary">+ Nouveau patient</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Agenda — Suivi AVK{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="eyebrow">Planning</div>
+    <h1>Agenda des rendez-vous</h1>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title">À venir</div>
+  {% if rdvs_a_venir %}
+  <table class="data-table">
+    <thead>
+      <tr><th>Date</th><th>Patient</th><th>Motif</th><th>Statut</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for rdv in rdvs_a_venir %}
+      <tr>
+        <td data-label="Date" class="num">{{ rdv.date_heure|date:"d/m/Y H:i" }}</td>
+        <td data-label="Patient"><a href="{% url 'patients:detail' rdv.patient.pk %}">{{ rdv.patient }}</a></td>
+        <td data-label="Motif">{{ rdv.motif }}</td>
+        <td data-label="Statut"><span class="badge-niveau badge-info">{{ rdv.get_statut_display }}</span></td>
+        <td class="text-right"><a href="{% url 'consultations:rdv_detail' rdv.pk %}" class="btn btn-sm btn-outline btn-block">Ouvrir</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="muted">Aucun rendez-vous à venir.</p>
+  {% endif %}
+</div>
+
+<div class="card">
+  <div class="card-title">Historique récent</div>
+  {% if rdvs_passes %}
+  <table class="data-table">
+    <thead>
+      <tr><th>Date</th><th>Patient</th><th>Motif</th><th>Statut</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for rdv in rdvs_passes %}
+      <tr>
+        <td data-label="Date" class="num">{{ rdv.date_heure|date:"d/m/Y H:i" }}</td>
+        <td data-label="Patient"><a href="{% url 'patients:detail' rdv.patient.pk %}">{{ rdv.patient }}</a></td>
+        <td data-label="Motif">{{ rdv.motif }}</td>
+        <td data-label="Statut"><span class="badge-niveau badge-{% if rdv.statut == 'honore' %}success{% elif rdv.statut == 'annule' %}danger{% else %}info{% endif %}">{{ rdv.get_statut_display }}</span></td>
+        <td class="text-right"><a href="{% url 'consultations:rdv_detail' rdv.pk %}" class="btn btn-sm btn-outline btn-block">Ouvrir</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="muted">Aucun historique pour l'instant.</p>
+  {% endif %}
+</div>
+{% endblock %}

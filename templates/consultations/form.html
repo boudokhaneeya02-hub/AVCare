@@ -1,0 +1,407 @@
+{% extends "base.html" %}
+
+{% block title %}Nouvelle consultation - {{ patient }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="eyebrow">{{ patient }}</div>
+    <h1>Nouvelle consultation</h1>
+  </div>
+  <a href="{% url 'patients:detail' patient.pk %}" class="btn btn-outline">Retour à la fiche</a>
+</div>
+
+<div
+  id="donnees-consultation"
+  data-cible-min="{{ patient.inr_cible_min }}"
+  data-cible-max="{{ patient.inr_cible_max }}"
+  data-valve-mecanique="{{ patient.valve_mecanique|yesno:'true,false' }}"
+  data-dose-precedente="{{ dose_precedente|default_if_none:'' }}"
+></div>
+
+<div style="display:grid; grid-template-columns: 1fr 320px; gap:1rem; align-items:start;">
+  <form method="post" id="form-consultation">
+    {% csrf_token %}
+
+    <div class="card">
+      <div class="card-title">Mesure et dose</div>
+
+      <div class="form-row">
+        <div class="field">
+          <label>Date de la consultation</label>
+          {{ form.date_consultation }}
+        </div>
+
+        <div class="field">
+          <label>Valeur de l'INR</label>
+          {{ form.valeur_inr }}
+          {% if form.valeur_inr.errors %}
+            <ul class="errorlist">
+              {% for e in form.valeur_inr.errors %}
+                <li>{{ e }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="field">
+          <label>Dose - comprimés Sintrom 4 mg / jour</label>
+          {{ form.dose_comprimes }}
+          <div class="help">
+            1 comprimé = 4 mg · 1/2 comprimé = 2 mg
+            {% if dose_precedente %}
+              · Dose précédente : <span class="mono">{{ dose_precedente }} cp/jour</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Schéma de dose si variable</label>
+          {{ form.dose_libre }}
+        </div>
+      </div>
+
+      <div class="field" id="bloc-motif-ajustement" style="display:none;">
+        <label>Motif de l'ajustement de dose</label>
+        {{ form.motif_ajustement_dose }}
+        <div class="help">Obligatoire car la dose saisie diffère de la dose précédente.</div>
+        {% if form.motif_ajustement_dose.errors %}
+          <ul class="errorlist">
+            {% for e in form.motif_ajustement_dose.errors %}
+              <li>{{ e }}</li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Événement hémorragique</div>
+
+      <div class="checkbox-line field">
+        {{ form.evenement_hemorragique }}
+        <label for="{{ form.evenement_hemorragique.id_for_label }}" style="margin:0;">
+          Un événement hémorragique est survenu depuis la dernière consultation
+        </label>
+      </div>
+
+      <div id="bloc-hemorragique" style="display:none;">
+        <label>Type(s) d'événement</label>
+        <div class="checkbox-grid">
+          {% for checkbox in form.types_evenements_hemorragiques %}
+            <label>{{ checkbox.tag }} {{ checkbox.choice_label }}</label>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Événement thrombotique / embolique</div>
+
+      <div class="checkbox-line field">
+        {{ form.evenement_thrombotique }}
+        <label for="{{ form.evenement_thrombotique.id_for_label }}" style="margin:0;">
+          Un événement thrombotique ou embolique est survenu depuis la dernière consultation
+        </label>
+      </div>
+
+      <div id="bloc-thrombotique" style="display:none;">
+        <label>Type(s) d'événement</label>
+        <div class="checkbox-grid">
+          {% for checkbox in form.types_evenements_thrombotiques %}
+            <label>{{ checkbox.tag }} {{ checkbox.choice_label }}</label>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Observance et commentaire</div>
+
+      <div class="field">
+        <label>Observance du traitement</label>
+        {{ form.observance_signalee }}
+      </div>
+
+      <div class="field">
+        <label>Commentaire médical</label>
+        {{ form.commentaire_medical }}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="checkbox-line field" style="margin-bottom:0;">
+        <input type="checkbox" name="creer_rdv_suivant" id="creer_rdv_suivant" checked>
+        <label for="creer_rdv_suivant" style="margin:0;">
+          Planifier automatiquement le prochain rendez-vous de contrôle
+          ({{ patient.get_frequence_suivi_display|lower }})
+        </label>
+      </div>
+    </div>
+
+    <div class="flex-between mt-1">
+      <button type="submit" class="btn btn-sauge">Enregistrer la consultation</button>
+      <a href="{% url 'patients:detail' patient.pk %}" class="btn btn-outline">Annuler</a>
+    </div>
+  </form>
+
+  <div>
+    <div class="card">
+      <div class="card-title">Cible INR de ce patient</div>
+      <p class="mono" style="font-size:1.2rem; color:var(--bleu-nuit); margin:0;">
+        {{ patient.inr_cible_min }} - {{ patient.inr_cible_max }}
+      </p>
+
+      {% if patient.valve_mecanique %}
+        <p class="help">
+          Prothèse cardiaque mécanique - cible relevée, vigilance accrue au sous-dosage.
+        </p>
+      {% endif %}
+    </div>
+
+    <div class="card" id="apercu-interpretation">
+      <div class="card-title">Aide à la lecture</div>
+
+      <p class="muted" id="apercu-placeholder">
+        Saisissez une valeur d'INR pour voir l'aide à la lecture.
+      </p>
+
+      <div id="apercu-resultat" style="display:none;">
+        <div class="alerte-box" id="apercu-box">
+          <span class="icone" id="apercu-icone"></span>
+          <span id="apercu-message"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="apercu-ajustement">
+      <div class="card-title">Suggestion de palier indicative</div>
+
+      <p class="muted" id="ajustement-placeholder">
+        Saisissez l'INR et la dose pour voir une suggestion indicative.
+      </p>
+
+      <div id="ajustement-resultat" style="display:none;">
+        <p class="mono" id="ajustement-pourcentage" style="font-size:1.3rem; color:var(--bleu-nuit); margin:0;"></p>
+        <p id="ajustement-dose" style="margin:0.3rem 0 0;"></p>
+      </div>
+
+      <p class="help" style="margin-top:0.8rem;">
+        Cette suggestion est indicative. Elle ne remplace jamais le jugement clinique.
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  function lireNombre(valeur) {
+    if (valeur === null || valeur === undefined) {
+      return NaN;
+    }
+
+    valeur = String(valeur).trim().replace(",", ".");
+
+    if (valeur === "") {
+      return NaN;
+    }
+
+    return parseFloat(valeur);
+  }
+
+  function afficherBloc(checkbox, bloc) {
+    if (!checkbox || !bloc) {
+      return;
+    }
+
+    bloc.style.display = checkbox.checked ? "block" : "none";
+  }
+
+  function arrondirQuart(valeur) {
+    return Math.round(valeur / 0.25) * 0.25;
+  }
+
+  var donnees = document.getElementById("donnees-consultation");
+
+  var champInr = document.querySelector("[name='valeur_inr']");
+  var champDose = document.querySelector("[name='dose_comprimes']");
+  var champHemorragique = document.querySelector("[name='evenement_hemorragique']");
+  var champThrombotique = document.querySelector("[name='evenement_thrombotique']");
+
+  var blocHemorragique = document.getElementById("bloc-hemorragique");
+  var blocThrombotique = document.getElementById("bloc-thrombotique");
+  var blocMotifAjustement = document.getElementById("bloc-motif-ajustement");
+
+  var placeholder = document.getElementById("apercu-placeholder");
+  var resultat = document.getElementById("apercu-resultat");
+  var box = document.getElementById("apercu-box");
+  var icone = document.getElementById("apercu-icone");
+  var message = document.getElementById("apercu-message");
+
+  var ajustementPlaceholder = document.getElementById("ajustement-placeholder");
+  var ajustementResultat = document.getElementById("ajustement-resultat");
+  var ajustementPourcentage = document.getElementById("ajustement-pourcentage");
+  var ajustementDose = document.getElementById("ajustement-dose");
+
+  if (!donnees || !champInr || !champDose || !champHemorragique || !champThrombotique) {
+    return;
+  }
+
+  var cibleMin = lireNombre(donnees.dataset.cibleMin);
+  var cibleMax = lireNombre(donnees.dataset.cibleMax);
+  var porteurProthese = donnees.dataset.valveMecanique === "true";
+  var dosePrecedente = lireNombre(donnees.dataset.dosePrecedente);
+
+  var seuilSousDosageCritique = cibleMin - 1.0;
+
+  function majMotifAjustement() {
+    var doseSaisie = lireNombre(champDose.value);
+
+    if (
+      blocMotifAjustement &&
+      !isNaN(dosePrecedente) &&
+      !isNaN(doseSaisie) &&
+      Math.abs(doseSaisie - dosePrecedente) > 0.001
+    ) {
+      blocMotifAjustement.style.display = "block";
+    } else if (blocMotifAjustement) {
+      blocMotifAjustement.style.display = "none";
+    }
+  }
+
+  function majAjustement() {
+    var valeur = lireNombre(champInr.value);
+    var doseActuelle = lireNombre(champDose.value);
+    var hemorragie = champHemorragique.checked;
+
+    if (isNaN(valeur) || isNaN(doseActuelle)) {
+      ajustementPlaceholder.style.display = "block";
+      ajustementResultat.style.display = "none";
+      return;
+    }
+
+    ajustementPlaceholder.style.display = "none";
+    ajustementResultat.style.display = "block";
+
+    if (hemorragie) {
+      ajustementPourcentage.textContent = "Avis médical requis";
+      ajustementDose.textContent = "Événement hémorragique signalé : aucune suggestion de palier proposée.";
+      return;
+    }
+
+    var ecartMin = cibleMin - valeur;
+    var ecartMax = valeur - cibleMax;
+    var pourcentage = "";
+    var doseSuggeree = doseActuelle;
+    var texte = "";
+
+    if (valeur > 5.0) {
+      pourcentage = "Avis médical urgent";
+      texte = "INR supérieur à 5 : ne pas modifier seul la dose. Contacter rapidement le médecin.";
+    } else if (valeur > 4.0) {
+      pourcentage = "-10 à -20 %";
+      doseSuggeree = arrondirQuart(doseActuelle * 0.85);
+      texte = "INR très élevé : avis médical rapide recommandé avant toute modification.";
+    } else if (ecartMin > 1.0) {
+      pourcentage = "+10 à +20 %";
+      doseSuggeree = arrondirQuart(doseActuelle * 1.15);
+      texte = "Sous-dosage important : avis médical rapide recommandé.";
+    } else if (ecartMin > 0.3) {
+      pourcentage = "+10 %";
+      doseSuggeree = arrondirQuart(doseActuelle * 1.10);
+      texte = "Palier usuel indicatif de légère hausse.";
+    } else if (ecartMax > 0.3) {
+      pourcentage = "-10 %";
+      doseSuggeree = arrondirQuart(doseActuelle * 0.90);
+      texte = "Palier usuel indicatif de légère baisse.";
+    } else {
+      pourcentage = "Maintien";
+      texte = "INR proche ou dans la cible : maintien usuel de la dose actuelle.";
+    }
+
+    ajustementPourcentage.textContent = pourcentage;
+    ajustementDose.textContent = texte + " Soit environ " + doseSuggeree.toFixed(2) + " cp/jour.";
+  }
+
+  function majInterpretation() {
+    var valeur = lireNombre(champInr.value);
+    var hemorragie = champHemorragique.checked;
+
+    if (isNaN(valeur)) {
+      placeholder.style.display = "block";
+      resultat.style.display = "none";
+      majAjustement();
+      return;
+    }
+
+    placeholder.style.display = "none";
+    resultat.style.display = "block";
+
+    var niveau = "";
+    var icon = "";
+    var texte = "";
+
+    if (hemorragie) {
+      niveau = "danger";
+      icon = "!";
+      texte = "Événement hémorragique signalé : contact médical rapide recommandé, quelle que soit la valeur d'INR.";
+    } else if (valeur > 5.0) {
+      niveau = "danger";
+      icon = "!";
+      texte = "INR supérieur à 5 : risque hémorragique élevé. Contact médical urgent recommandé.";
+    } else if (valeur > 4.0) {
+      niveau = "danger";
+      icon = "!";
+      texte = "INR très élevé supérieur à 4 : risque hémorragique important. Contacter rapidement le médecin.";
+    } else if (porteurProthese && valeur < seuilSousDosageCritique) {
+      niveau = "danger";
+      icon = "!";
+      texte = "AVIS MÉDECIN : sous-dosage important chez un patient porteur d'une prothèse mécanique. Hospitalisation possible pour ajustement thérapeutique.";
+    } else if (valeur < cibleMin) {
+      niveau = "warning";
+      icon = "↓";
+      texte = "INR sous la cible (" + cibleMin + " - " + cibleMax + ") : anticoagulation insuffisante, réévaluation possible.";
+    } else if (valeur <= cibleMax) {
+      niveau = "success";
+      icon = "OK";
+      texte = "INR dans la zone cible (" + cibleMin + " - " + cibleMax + ").";
+    } else {
+      niveau = "warning";
+      icon = "↑";
+      texte = "INR au-dessus de la cible (" + cibleMin + " - " + cibleMax + ") : risque de sur-anticoagulation, avis médical recommandé.";
+    }
+
+    box.className = "alerte-box " + niveau;
+    icone.textContent = icon;
+    message.textContent = texte;
+
+    majAjustement();
+  }
+
+  champHemorragique.addEventListener("change", function () {
+    afficherBloc(champHemorragique, blocHemorragique);
+    majInterpretation();
+  });
+
+  champThrombotique.addEventListener("change", function () {
+    afficherBloc(champThrombotique, blocThrombotique);
+  });
+
+  champInr.addEventListener("input", majInterpretation);
+
+  champDose.addEventListener("input", function () {
+    majInterpretation();
+    majMotifAjustement();
+  });
+
+  afficherBloc(champHemorragique, blocHemorragique);
+  afficherBloc(champThrombotique, blocThrombotique);
+  majInterpretation();
+  majMotifAjustement();
+})();
+</script>
+{% endblock %}

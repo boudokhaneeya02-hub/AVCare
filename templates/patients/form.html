@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+{% block title %}{% if object %}Modifier{% else %}Nouveau patient{% endif %} — Suivi AVK{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="eyebrow">Fiche patient</div>
+    <h1>{% if object %}Modifier {{ object }}{% else %}Nouveau patient{% endif %}</h1>
+  </div>
+  {% if object %}<a href="{% url 'patients:detail' object.pk %}" class="btn btn-outline">← Retour à la fiche</a>{% endif %}
+</div>
+
+<form method="post">
+  {% csrf_token %}
+
+  <div class="card">
+    <div class="card-title">Identité</div>
+    <div class="form-row">
+      <div class="field">
+        <label>Nom</label>
+        {{ form.nom }}
+      </div>
+      <div class="field">
+        <label>Prénom</label>
+        {{ form.prenom }}
+      </div>
+    </div>
+    <div class="form-row-3">
+      <div class="field">
+        <label>Date de naissance</label>
+        {{ form.date_naissance }}
+      </div>
+      <div class="field">
+        <label>Sexe</label>
+        {{ form.sexe }}
+      </div>
+      <div class="field">
+        <label>Téléphone</label>
+        {{ form.telephone }}
+      </div>
+    </div>
+    <div class="field">
+      <label>Adresse</label>
+      {{ form.adresse }}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Antécédents &amp; indication</div>
+    <div class="field">
+      <label>Antécédents médicaux</label>
+      {{ form.antecedents_medicaux }}
+      <div class="help">HTA, diabète, cardiopathie, antécédents hémorragiques, etc.</div>
+    </div>
+    <div class="form-row">
+      <div class="field">
+        <label>Indication du traitement AVK</label>
+        {{ form.indication }}
+      </div>
+      <div class="field">
+        <label>Date de l'événement</label>
+        {{ form.date_evenement }}
+        <div class="help">Date de l'événement médical initial (AVC, embolie, thrombose, pose de prothèse...)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Traitement AVK</div>
+    <div class="field">
+      <label>Molécule</label>
+      {{ form.molecule_avk }}
+    </div>
+    <div class="field">
+      <label>Traitements associés</label>
+      {{ form.traitement_associe }}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Cible INR</div>
+
+    <div class="checkbox-line field">
+      {{ form.valve_mecanique }}
+      <label for="{{ form.valve_mecanique.id_for_label }}" style="margin: 0;">Porteur d'une prothèse cardiaque mécanique</label>
+    </div>
+    <div class="field">
+      <label>Précision sur la prothèse (si applicable)</label>
+      {{ form.type_valve }}
+    </div>
+
+    <div class="alerte-box info" style="background:#E8EEF1; border-left: 4px solid var(--bleu-nuit-clair); color: var(--bleu-nuit);">
+      <span class="icone">ℹ</span>
+      <span>
+        Cible usuelle sous AVK : <strong>2,0 – 3,0</strong>.
+        En cas de prothèse mécanique (aortique ou mitrale), la cible est
+        souvent plus élevée (ex. <strong>2,5 – 3,5</strong> selon le type de
+        prothèse) — sélectionner l'indication correspondante pré-coche
+        automatiquement cette case. Cette cible reste entièrement modifiable
+        et reste sous la responsabilité du médecin.
+      </span>
+    </div>
+
+    <div class="form-row">
+      <div class="field">
+        <label>Borne basse de la cible INR</label>
+        {{ form.inr_cible_min }}
+      </div>
+      <div class="field">
+        <label>Borne haute de la cible INR</label>
+        {{ form.inr_cible_max }}
+      </div>
+    </div>
+    {% if form.non_field_errors %}
+      <ul class="errorlist">{% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div class="card-title">Paramètres biologiques (dernier bilan connu)</div>
+    <div class="field">
+      <label>Date du bilan biologique</label>
+      {{ form.date_bilan_biologique }}
+    </div>
+    <div class="form-row-3">
+      <div class="field">
+        <label>Urée</label>
+        {{ form.uree }}
+        <div class="help">g/L</div>
+      </div>
+      <div class="field">
+        <label>Créatinine</label>
+        {{ form.creatinine }}
+        <div class="help">mg/L</div>
+      </div>
+      <div class="field">
+        <label>TP (taux de prothrombine)</label>
+        {{ form.tp }}
+        <div class="help">%</div>
+      </div>
+    </div>
+    <div class="form-row-3">
+      <div class="field">
+        <label>INR (bilan biologique)</label>
+        {{ form.inr_biologie }}
+      </div>
+      <div class="field">
+        <label>Hémoglobine</label>
+        {{ form.hemoglobine }}
+        <div class="help">g/dL</div>
+      </div>
+      <div class="field">
+        <label>Plaquettes</label>
+        {{ form.plaquettes }}
+        <div class="help">/mm³</div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Ionogramme sanguin</label>
+      {{ form.ionogramme }}
+      <div class="help">ex : Na+ 138 mmol/L, K+ 4.2 mmol/L</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Suivi</div>
+    <div class="form-row">
+      <div class="field">
+        <label>Fréquence de suivi recommandée</label>
+        {{ form.frequence_suivi }}
+      </div>
+      <div class="field" style="display:flex; align-items:center;">
+        <div class="checkbox-line">
+          {{ form.actif }}
+          <label for="{{ form.actif.id_for_label }}" style="margin:0;">Patient actif (suivi en cours)</label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex-between mt-1">
+    <button type="submit" class="btn btn-primary">{% if object %}Enregistrer les modifications{% else %}Créer la fiche patient{% endif %}</button>
+    {% if object %}<a href="{% url 'patients:detail' object.pk %}" class="btn btn-outline">Annuler</a>{% else %}<a href="{% url 'patients:liste' %}" class="btn btn-outline">Annuler</a>{% endif %}
+  </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  var champIndication = document.getElementById("{{ form.indication.id_for_label }}");
+  var champValve = document.getElementById("{{ form.valve_mecanique.id_for_label }}");
+  var champCibleMin = document.getElementById("{{ form.inr_cible_min.id_for_label }}");
+  var champCibleMax = document.getElementById("{{ form.inr_cible_max.id_for_label }}");
+
+  var INDICATIONS_PROTHESE = ["prothese_mecanique_aortique", "prothese_mecanique_mitrale"];
+  var dejaPersonnalise = {{ object|yesno:"true,false" }}; // ne pas écraser une fiche existante déjà sauvegardée
+
+  champIndication.addEventListener("change", function () {
+    var estProthese = INDICATIONS_PROTHESE.indexOf(champIndication.value) !== -1;
+    champValve.checked = estProthese;
+    if (!dejaPersonnalise) {
+      champCibleMin.value = estProthese ? "2.5" : "2.0";
+      champCibleMax.value = estProthese ? "3.5" : "3.0";
+    }
+  });
+})();
+</script>
+{% endblock %}

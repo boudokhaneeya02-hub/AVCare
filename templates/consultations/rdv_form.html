@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}{% if rdv %}Modifier le rendez-vous{% else %}Nouveau rendez-vous{% endif %} — {{ patient }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="eyebrow">{{ patient }}</div>
+    <h1>{% if rdv %}Modifier le rendez-vous{% else %}Planifier un rendez-vous{% endif %}</h1>
+  </div>
+  <a href="{% url 'patients:detail' patient.pk %}" class="btn btn-outline">← Retour à la fiche</a>
+</div>
+
+<div class="card" style="max-width: 560px;">
+  {% if form.non_field_errors %}
+    <div class="alerte-box danger">
+      {% for erreur in form.non_field_errors %}<div>{{ erreur }}</div>{% endfor %}
+    </div>
+  {% endif %}
+
+  <form method="post">
+    {% csrf_token %}
+    <div class="field">
+      <label>Date et heure</label>
+      {{ form.date_heure }}
+      {% for erreur in form.date_heure.errors %}<div class="help" style="color:#b00020;">{{ erreur }}</div>{% endfor %}
+    </div>
+    <div class="field">
+      <label>Motif</label>
+      {{ form.motif }}
+      {% for erreur in form.motif.errors %}<div class="help" style="color:#b00020;">{{ erreur }}</div>{% endfor %}
+    </div>
+    {% if rdv %}
+    <div class="field">
+      <label>Statut</label>
+      {{ form.statut }}
+      {% for erreur in form.statut.errors %}<div class="help" style="color:#b00020;">{{ erreur }}</div>{% endfor %}
+    </div>
+    {% else %}
+      {# Création : on garde le statut par défaut "planifié" sans l'afficher #}
+      <input type="hidden" name="statut" value="planifie">
+    {% endif %}
+    <div class="field">
+      <label>Notes</label>
+      {{ form.notes }}
+      {% for erreur in form.notes.errors %}<div class="help" style="color:#b00020;">{{ erreur }}</div>{% endfor %}
+    </div>
+    <div class="flex-between">
+      <button type="submit" class="btn btn-primary">{% if rdv %}Enregistrer{% else %}Planifier{% endif %}</button>
+      <a href="{% url 'patients:detail' patient.pk %}" class="btn btn-outline">Annuler</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
