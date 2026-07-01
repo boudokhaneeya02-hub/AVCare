@@ -13,4 +13,12 @@ urlpatterns = [
     path("suivi/", include("consultations.urls")),
     path("notifications/", include("notifications.urls")),
     path("", RedirectView.as_view(pattern_name="patients:liste", permanent=False)),
+    path(
+    "service-worker.js",
+    TemplateView.as_view(
+        template_name="service-worker.js",
+        content_type="application/javascript"
+    ),
+    name="service_worker"
+),
 ]
