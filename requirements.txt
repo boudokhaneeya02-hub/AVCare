@@ -1,0 +1,7 @@
+Django==6.0.6
+gunicorn==23.0.0
+whitenoise==6.8.2
+dj-database-url==3.1.2
+psycopg2-binary==2.9.10
+pywebpush==2.3.0
+py-vapid==1.9.4

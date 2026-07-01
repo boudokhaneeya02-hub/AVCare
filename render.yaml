@@ -1,0 +1,29 @@
+# Fichier de configuration pour un déploiement en un clic sur Render.
+# Voir https://render.com/docs/blueprint-spec
+
+databases:
+  - name: avcare-db
+    plan: free
+
+services:
+  - type: web
+    name: avcare
+    runtime: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate"
+    startCommand: "gunicorn anticoag_suivi.wsgi:application"
+    envVars:
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: avcare-db
+          property: connectionString
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
+      - key: VAPID_ADMIN_EMAIL
+        sync: false
