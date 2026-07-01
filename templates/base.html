@@ -23,6 +23,12 @@
   {% block extra_head %}{% endblock %}
 </head>
 
+  <script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/service-worker.js");
+}
+</script>
+  
 <body>
   <div class="shell">
     <div class="topbar">
